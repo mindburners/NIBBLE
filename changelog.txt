@@ -1,0 +1,11 @@
+0.9.7 - F.ECHO fix: no more hanging notes with long echo times
+0.9.6 - Sequencer BPM set with the encoder only
+0.9.5 - Sequencer: holding A+B to leave no longer changes steps
+0.9.4 - MIX screen in the sequencer: LEAD, BASS and DRUMS levels
+0.9.3 - Clearer sequencer cursor
+0.9.1 - Two parts: LEAD and BASS tracks, each with its own patch
+0.9 - Song sequencer: 8 patterns of drums + notes, chain, key transpose
+0.8.1 - Clearer 1-bit speech
+0.8 - WAVE ED wave drawing, SCOPE screen, tracker-style fake echo, 1-bit speech drums
+0.7 - 40 patch memories, SETUP page with master level
+0.6 - Rotary encoder and button D, patch preview and compare

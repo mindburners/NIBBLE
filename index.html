@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="https://raw.githubusercontent.com/mindburners/Teensy-Loader-MINDBURNER/main/favicon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NIBBLE — Firmware Installer</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
+  
+  <style>
+    body {
+      font-family: -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+      max-width: 520px;
+      margin: 60px auto;
+      text-align: center;
+      color: #eee;
+      background: #0c0c0c;
+      padding: 0 20px 50px;
+      line-height: 1.5;
+    }
+    img.logo {
+      width: 140px;
+      margin: 20px 0 10px;
+    }
+    h1 { 
+      font-size: 1.5em; 
+      margin-bottom: 0.2em; 
+    }
+    .sub { 
+      color: #aaa; 
+      margin-bottom: 25px; 
+      font-size: 1.15em;
+    }
+    ol { 
+      text-align: left; 
+      color: #ccc; 
+      max-width: 420px;
+      margin: 0 auto 30px;
+      padding-left: 20px;
+    }
+    .changelog {
+      text-align: left;
+      max-width: 420px;
+      margin: 40px auto;
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #333;
+    }
+    .changelog h3 {
+      margin-top: 0;
+      color: #ffcc00;
+    }
+    .changelog ul {
+      padding-left: 20px;
+      text-align: left;
+    }
+    esp-web-install-button {
+      display: block;
+      margin: 30px auto;
+    }
+    .keep {
+      text-align: left;
+      max-width: 420px;
+      margin: 0 auto 10px;
+      background: #1f1508;
+      border: 1px solid #5a3c10;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #e8c98a;
+      font-size: 0.92em;
+    }
+    .docs a {
+      color: #ffcc00;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+    .browser-note {
+      margin-top: 40px;
+      font-size: 0.9em;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <img class="logo" src="logo.png" alt="Logo">
+
+  <h1>NIBBLE</h1>
+  <p class="sub" style="margin-top:-8px;font-size:0.95em">Chiptune MIDI synthesiser module</p>
+  <p class="sub">Firmware Installer — <strong id="version-display">Loading...</strong></p>
+
+  <ol>
+    <li>Connect your device via a USB DATA CABLE</li>
+    <li>Click the button below</li>
+    <li>Select the correct COM port and click <strong>Install</strong></li>
+  </ol>
+
+  <div class="keep">
+    <strong>Your sounds are kept.</strong> Updating keeps your saved patches, drawn waves, sequencer patterns and songs,
+    MIDI channel, tuning and master level.
+  </div>
+
+  <esp-web-install-button 
+    manifest="manifest.json">
+  </esp-web-install-button>
+
+  <p class="docs">
+    <a href="NIBBLE_User_Manual.pdf">User manual (PDF)</a>
+    <a href="NIBBLE_Quick_Start.pdf">Quick start (PDF)</a>
+  </p>
+
+  <!-- Changelog Section -->
+  <div class="changelog">
+    <h3>What's New</h3>
+    <ul id="changelog-list">
+      <!-- Filled in automatically from changelog.txt -->
+    </ul>
+  </div>
+
+  <p class="browser-note">
+    Best used in Chrome / Edge<br>
+    <small>Version and What's New are loaded automatically from changelog.txt</small>
+  </p>
+
+  <script>
+    // Everything version-related comes from changelog.txt (newest line first: "0.9.7 - notes").
+    // The installer manifest is built here too, so manifest.json never needs editing.
+    async function setup() {
+      const verEl  = document.getElementById('version-display');
+      const listEl = document.getElementById('changelog-list');
+      const btn    = document.querySelector('esp-web-install-button');
+      try {
+        const res  = await fetch(`changelog.txt?ts=${Date.now()}`);
+        const text = await res.text();
+        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length);
+        listEl.innerHTML = '';
+        let latest = null;
+        for (const line of lines) {
+          const m = line.match(/^v?([0-9][0-9A-Za-z.]*)\s*[-–:]\s*(.*)$/);
+          const li = document.createElement('li');
+          if (m) {
+            if (!latest) latest = m[1];
+            const b = document.createElement('strong'); b.textContent = m[1];
+            li.appendChild(b); li.appendChild(document.createTextNode(' - ' + m[2]));
+          } else {
+            li.textContent = line;
+          }
+          listEl.appendChild(li);
+        }
+        verEl.textContent = latest ? `Version ${latest}` : 'Latest Version';
+        if (latest) {
+          const base = new URL('./', location.href).href;
+          const manifest = {
+            name: document.title,
+            version: latest,
+            new_install_prompt_erase: false,
+            builds: [{
+              chipFamily: 'ESP32',
+              parts: [
+                { path: base + 'bootloader.bin', offset: 4096 },
+                { path: base + 'partitions.bin', offset: 32768 },
+                { path: base + 'firmware.bin',   offset: 65536 }
+              ]
+            }]
+          };
+          const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+          btn.setAttribute('manifest', URL.createObjectURL(blob));
+        }
+      } catch (err) {
+        verEl.textContent = 'Latest Version';        // falls back to manifest.json
+      }
+    }
+    window.addEventListener('load', setup);
+  </script>
+</body>
+</html>
